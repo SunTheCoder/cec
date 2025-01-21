@@ -3,30 +3,57 @@ import ProfileButton from "./ProfileButton";
 
 export default function Navigation() {
   return (
-    <nav className="bg-gray-800 p-4 shadow-lg">
-      <ul className="flex gap-8 items-center max-w-7xl mx-auto text-white">
-        {/* Home Link */}
-        <li>
-          <ProfileButton />
-        </li>
-        <li>
-          <NavLink 
-            to="/" 
-            className="px-4 py-2 text-lg font-semibold hover:bg-gray-700 rounded transition"
+    <nav className="p-4 shadow-lg">
+      <ul className="flex gap-12 items-center text-gray-800">
+        {/* Home Link with Tooltip */}
+        <li className="relative group">
+          <NavLink
+            to="/"
+            className="text-lg font-semibold hover:bg-gray-700 rounded transition"
           >
-            Home
+            <img
+              src="../../../public/logo.png"
+              alt="CEC logo. Click for home."
+              width="50"
+              height="50"
+            />
           </NavLink>
+          <span className="absolute top-1/2 -translate-y-1/2 left-full mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 delay-300 bg-gray-800 text-white text-xs py-1 px-2 rounded shadow-lg">
+            Home
+          </span>
         </li>
-        <li>
-          <NavLink 
-            to="/map" 
-            className="px-4 py-2 text-lg font-semibold hover:bg-gray-700 rounded transition"
+
+        {/* Map Link with Tooltip */}
+        <li className="relative group">
+          <NavLink
+            to="/map"
+            className="px-2 py-1 text-lg font-semibold hover:bg-gray-200 rounded transition"
           >
             Map
           </NavLink>
+          <span className="absolute top-1/2 -translate-y-1/2 left-full ml-2 mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 delay-500 bg-gray-800 text-white text-xs py-1 px-2 rounded shadow-lg">
+            View Map
+          </span>
+        </li>
+        <li className="relative group">
+          <NavLink
+            to="/login"
+            className="px-2 py-1 text-lg font-semibold hover:bg-gray-200 rounded transition"
+          >
+            Login
+          </NavLink>
+          <span className="absolute top-1/2 -translate-y-1/2 left-full ml-2 mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 delay-500 bg-gray-800 text-white text-xs py-1 px-2 rounded shadow-lg">
+            Login
+          </span>
         </li>
 
-        {/* Profile Button */}
+        {/* Profile Button with Tooltip */}
+        <li className="relative group ml-auto">
+          <ProfileButton />
+          <span className="absolute top-1/2 -translate-y-1/2 right-full mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 delay-500 bg-gray-800 text-white text-xs py-1 px-2 rounded shadow-lg">
+            Profile
+          </span>
+        </li>
       </ul>
     </nav>
   );
