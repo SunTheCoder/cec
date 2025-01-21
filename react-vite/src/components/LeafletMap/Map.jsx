@@ -4,14 +4,36 @@
 
     const ResourceMap = () => {
     const [geojsonData, setGeojsonData] = useState({ mainland: null, alaska: null, islands: null });
+    const [stateData, setStateData] = useState(null);
+    const [countyData, setCountyData] = useState(null);
+    const [cityData, setCityData] = useState(null);
     const [selectedFeature, setSelectedFeature] = useState(null);
-    const [isExpanded, setIsExpanded] = useState(false); // ✅ Controls accordion state
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [reservationsByState, setReservationsByState] = useState({});
+    const [allReservations, setAllReservations] = useState(null);
 
     useEffect(() => {
         const fetchGeoJSONs = async () => {
         try {
+            // Fetch tribal reservations data
             const response = await fetch("/other_reservation.geojson");
             const data = await response.json();
+            setAllReservations(data);
+
+            // Fetch state boundaries data
+            const stateResponse = await fetch("/us-state-boundaries.geojson");
+            const stateGeoJSON = await stateResponse.json();
+            setStateData(stateGeoJSON);
+
+            // Fetch county boundaries data
+            const countyResponse = await fetch("/georef-united-states-of-america-county.geojson");
+            const countyGeoJSON = await countyResponse.json();
+            setCountyData(countyGeoJSON);
+
+            // Fetch cities data
+            const citiesResponse = await fetch("/us_cities.geojson");
+            const citiesGeoJSON = await citiesResponse.json();
+            setCityData(citiesGeoJSON);
 
             // Separate features by region
             const mainland = data.features.filter((feature) => {
@@ -46,7 +68,7 @@
         fetchGeoJSONs();
     }, []);
 
-    // ✅ Function to handle feature click and show metadata
+    // Function to handle feature click and show metadata
     const onEachFeature = (feature, layer) => {
         console.log(feature)
         layer.on({
@@ -55,12 +77,104 @@
             name: feature.properties["BASENAME"] || "Unknown Location",
             centlat: feature.properties["CENTLAT"]|| "No type available",
             centlng: feature.properties["CENTLON"] || "No description available",
-            fullData: feature.properties, // ✅ Store entire dataset for expansion
+            fullData: feature.properties,
             coordinates: e.latlng,
             });
-            setIsExpanded(false); // ✅ Collapse accordion on new selection
+            setIsExpanded(false);
         },
         });
+    };
+
+    const onEachState = (feature, layer) => {
+        layer.on({
+            click: (e) => {
+                const stateName = feature.properties.name;
+                // Find all reservations within this state's bounds
+                const bounds = layer.getBounds();
+                const stateReservations = allReservations?.features.filter(reservation => {
+                    const [lon, lat] = reservation.geometry.coordinates[0][0];
+                    const point = L.latLng(lat, lon);
+                    return bounds.contains(point);
+                }).map(reservation => reservation.properties.BASENAME) || [];
+
+                setSelectedFeature({
+                    name: stateName,
+                    coordinates: e.latlng,
+                    isState: true,
+                    reservations: stateReservations
+                });
+            }
+        });
+    };
+
+    const onEachCounty = (feature, layer) => {
+        layer.on({
+            click: (e) => {
+                const countyName = feature.properties.name;
+                // Find all reservations within this county's bounds
+                const bounds = layer.getBounds();
+                const countyReservations = allReservations?.features.filter(reservation => {
+                    const [lon, lat] = reservation.geometry.coordinates[0][0];
+                    const point = L.latLng(lat, lon);
+                    return bounds.contains(point);
+                }).map(reservation => reservation.properties.BASENAME) || [];
+
+                setSelectedFeature({
+                    name: countyName,
+                    coordinates: e.latlng,
+                    isCounty: true,
+                    reservations: countyReservations
+                });
+            }
+        });
+    };
+
+    const onEachCity = (feature, layer) => {
+        layer.on({
+            click: (e) => {
+                const cityName = feature.properties.name;
+                // Find all reservations within 100km radius of the city
+                const cityPoint = L.latLng(feature.geometry.coordinates[1], feature.geometry.coordinates[0]);
+                const cityReservations = allReservations?.features.filter(reservation => {
+                    const [lon, lat] = reservation.geometry.coordinates[0][0];
+                    const reservationPoint = L.latLng(lat, lon);
+                    return cityPoint.distanceTo(reservationPoint) <= 100000; // 100km in meters
+                }).map(reservation => reservation.properties.BASENAME) || [];
+
+                setSelectedFeature({
+                    name: cityName,
+                    coordinates: [feature.geometry.coordinates[1], feature.geometry.coordinates[0]],
+                    isCity: true,
+                    reservations: cityReservations
+                });
+            }
+        });
+    };
+
+    const hasReservationsNearby = (feature, type) => {
+        if (!allReservations) return false;
+        
+        if (type === 'state') {
+            const bounds = L.geoJSON(feature).getBounds();
+            return allReservations.features.some(reservation => {
+                const [lon, lat] = reservation.geometry.coordinates[0][0];
+                return bounds.contains(L.latLng(lat, lon));
+            });
+        } else if (type === 'county') {
+            const bounds = L.geoJSON(feature).getBounds();
+            return allReservations.features.some(reservation => {
+                const [lon, lat] = reservation.geometry.coordinates[0][0];
+                return bounds.contains(L.latLng(lat, lon));
+            });
+        } else if (type === 'city') {
+            const cityPoint = L.latLng(feature.geometry.coordinates[1], feature.geometry.coordinates[0]);
+            return allReservations.features.some(reservation => {
+                const [lon, lat] = reservation.geometry.coordinates[0][0];
+                const reservationPoint = L.latLng(lat, lon);
+                return cityPoint.distanceTo(reservationPoint) <= 100000; // 100km in meters
+            });
+        }
+        return false;
     };
 
     const center = [37.54812, -77.44675];
@@ -71,6 +185,50 @@
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap contributors" />
 
             <LayersControl position="topright">
+            {/* State Boundaries Layer */}
+            <LayersControl.Overlay checked name="State Boundaries">
+                {stateData && <GeoJSON 
+                    data={stateData}
+                    style={(feature) => ({
+                        color: hasReservationsNearby(feature, 'state') ? '#2563eb' : '#666',
+                        weight: 1,
+                        fillOpacity: 0.1,
+                        fillColor: hasReservationsNearby(feature, 'state') ? '#2563eb' : '#666'
+                    })}
+                    onEachFeature={onEachState}
+                />}
+            </LayersControl.Overlay>
+
+            {/* County Boundaries Layer */}
+            <LayersControl.Overlay name="County Boundaries">
+                {countyData && <GeoJSON 
+                    data={countyData}
+                    style={(feature) => ({
+                        color: hasReservationsNearby(feature, 'county') ? '#2563eb' : '#999',
+                        weight: 1,
+                        fillOpacity: 0.1,
+                        fillColor: hasReservationsNearby(feature, 'county') ? '#2563eb' : '#999'
+                    })}
+                    onEachFeature={onEachCounty}
+                />}
+            </LayersControl.Overlay>
+
+            {/* Cities Layer */}
+            <LayersControl.Overlay name="Cities">
+                {cityData && <GeoJSON 
+                    data={cityData}
+                    pointToLayer={(feature, latlng) => L.circleMarker(latlng, {
+                        radius: 8,
+                        fillColor: hasReservationsNearby(feature, 'city') ? "#22c55e" : "#ff7800", // Changed color to green for cities with reservations
+                        color: "#000",
+                        weight: 1,
+                        opacity: 1,
+                        fillOpacity: 0.8
+                    })}
+                    onEachFeature={onEachCity}
+                />}
+            </LayersControl.Overlay>
+
             <LayersControl.Overlay checked name="Continental U.S.">
                 {geojsonData.mainland && <GeoJSON data={geojsonData.mainland} onEachFeature={onEachFeature} />}
             </LayersControl.Overlay>
@@ -84,41 +242,58 @@
             </LayersControl.Overlay>
             </LayersControl>
 
-            {/* ✅ Show clicked feature details inside a Popup */}
             {selectedFeature && (
             <Popup position={selectedFeature.coordinates}>
-            <div className="p-4 bg-white shadow-lg rounded-lg w-64">
-              {/* Popup Title */}
-              <h4 className="text-lg font-bold text-gray-800">{selectedFeature.name}</h4>
-          
-              {/* Location Details */}
-              <p className="text-sm text-gray-600 mt-2">
-                <strong className="text-gray-900">Nation:</strong> {selectedFeature.name}
-              </p>
-              <p className="text-sm text-gray-600">
-                <strong className="text-gray-900">Center Latitude:</strong> {selectedFeature.centlat}
-              </p>
-              <p className="text-sm text-gray-600">
-                <strong className="text-gray-900">Center Longitude:</strong> {selectedFeature.centlng}
-              </p>
-          
-              {/* Expandable Metadata Button */}
-              <button 
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="mt-3 w-full bg-blue-600 text-white py-1 px-3 rounded-md text-sm font-medium hover:bg-blue-700 transition"
-              >
-                {isExpanded ? "Hide Details ▲" : "Show More ▼"}
-              </button>
-          
-              {/* Expandable Section */}
-              {isExpanded && (
-                <div className="mt-3 max-h-40 overflow-y-auto bg-gray-100 p-2 rounded border border-gray-300">
-                  <pre className="text-xs text-gray-700">{JSON.stringify(selectedFeature.fullData, null, 2)}</pre>
+                <div className="p-4 bg-white shadow-lg rounded-lg w-64">
+                    <h4 className="text-lg font-bold text-gray-800">{selectedFeature.name}</h4>
+                    
+                    {(selectedFeature.isState || selectedFeature.isCounty || selectedFeature.isCity) ? (
+                        <div>
+                            <h5 className="text-md font-semibold text-gray-700 mt-2">
+                                Reservations {selectedFeature.isCity ? 'within 100km of this city' : 
+                                            `in this ${selectedFeature.isState ? 'state' : 'county'}`}:
+                            </h5>
+                            {selectedFeature.reservations.length > 0 ? (
+                                <ul className="mt-2 max-h-40 overflow-y-auto">
+                                    {selectedFeature.reservations.map((reservation, index) => (
+                                        <li key={index} className="text-sm text-gray-600 mb-1">• {reservation}</li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="text-sm text-gray-600 mt-2">
+                                    No reservations found {selectedFeature.isCity ? 'near this city' : 
+                                    `in this ${selectedFeature.isState ? 'state' : 'county'}`}.
+                                </p>
+                            )}
+                        </div>
+                    ) : (
+                        <>
+                            <p className="text-sm text-gray-600 mt-2">
+                                <strong className="text-gray-900">Nation:</strong> {selectedFeature.name}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                                <strong className="text-gray-900">Center Latitude:</strong> {selectedFeature.centlat}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                                <strong className="text-gray-900">Center Longitude:</strong> {selectedFeature.centlng}
+                            </p>
+                            
+                            <button 
+                                onClick={() => setIsExpanded(!isExpanded)}
+                                className="mt-3 w-full bg-blue-600 text-white py-1 px-3 rounded-md text-sm font-medium hover:bg-blue-700 transition"
+                            >
+                                {isExpanded ? "Hide Details ▲" : "Show More ▼"}
+                            </button>
+                            
+                            {isExpanded && (
+                                <div className="mt-3 max-h-40 overflow-y-auto bg-gray-100 p-2 rounded border border-gray-300">
+                                    <pre className="text-xs text-gray-700">{JSON.stringify(selectedFeature.fullData, null, 2)}</pre>
+                                </div>
+                            )}
+                        </>
+                    )}
                 </div>
-              )}
-            </div>
-          </Popup>
-          
+            </Popup>
             )}
         </MapContainer>
         </div>
