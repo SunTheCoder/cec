@@ -87,24 +87,38 @@
             {/* ✅ Show clicked feature details inside a Popup */}
             {selectedFeature && (
             <Popup position={selectedFeature.coordinates}>
-                <div>
-                <h4>{selectedFeature.name}</h4>
-                <p><strong>Nation:</strong> {selectedFeature.name}</p>
-                <p><strong>Center Latitude:</strong> {selectedFeature.centlat}</p>
-                <p><strong>Center Longitude:</strong> {selectedFeature.centlng}</p>
-
-                {/* ✅ Expandable metadata */}
-                <button onClick={() => setIsExpanded(!isExpanded)}>
-                    {isExpanded ? "Hide Details ▲" : "Show More ▼"}
-                </button>
-
-                {isExpanded && (
-                    <div style={{ marginTop: "10px", maxHeight: "150px", overflowY: "auto" }}>
-                    <pre>{JSON.stringify(selectedFeature.fullData, null, 2)}</pre>
-                    </div>
-                )}
+            <div className="p-4 bg-white shadow-lg rounded-lg w-64">
+              {/* Popup Title */}
+              <h4 className="text-lg font-bold text-gray-800">{selectedFeature.name}</h4>
+          
+              {/* Location Details */}
+              <p className="text-sm text-gray-600 mt-2">
+                <strong className="text-gray-900">Nation:</strong> {selectedFeature.name}
+              </p>
+              <p className="text-sm text-gray-600">
+                <strong className="text-gray-900">Center Latitude:</strong> {selectedFeature.centlat}
+              </p>
+              <p className="text-sm text-gray-600">
+                <strong className="text-gray-900">Center Longitude:</strong> {selectedFeature.centlng}
+              </p>
+          
+              {/* Expandable Metadata Button */}
+              <button 
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="mt-3 w-full bg-blue-600 text-white py-1 px-3 rounded-md text-sm font-medium hover:bg-blue-700 transition"
+              >
+                {isExpanded ? "Hide Details ▲" : "Show More ▼"}
+              </button>
+          
+              {/* Expandable Section */}
+              {isExpanded && (
+                <div className="mt-3 max-h-40 overflow-y-auto bg-gray-100 p-2 rounded border border-gray-300">
+                  <pre className="text-xs text-gray-700">{JSON.stringify(selectedFeature.fullData, null, 2)}</pre>
                 </div>
-            </Popup>
+              )}
+            </div>
+          </Popup>
+          
             )}
         </MapContainer>
         </div>
