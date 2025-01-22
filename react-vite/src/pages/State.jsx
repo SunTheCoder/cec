@@ -62,7 +62,7 @@ const State = () => {
                 </h2>
                 <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {reservations.map((reservation, index) => (
-                        <li key={index} className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors duration-200">
+                        <li key={index} className="bg-gray-50 rounded-lg p-4 shadow-md cursor-pointer hover:bg-gray-100 transition-colors duration-200">
                             <span className="text-gray-700 font-medium">
                                 {reservation.properties.BASENAME}
                             </span>
