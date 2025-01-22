@@ -3,6 +3,7 @@
     import "leaflet/dist/leaflet.css";
     import * as L from 'leaflet';
     import * as esri from 'esri-leaflet';
+import StatesList from "./StatesList";
 
     const ResourceMap = () => {
     const [geojsonData, setGeojsonData] = useState({ mainland: null, alaska: null, islands: null });
@@ -243,7 +244,7 @@
     const center = [37.54812, -77.44675];
 
     return (
-        <div style={{ height: "100vh", width: "100%" }}>
+        <div style={{ height: "100vh", width: "100%", zIndex: 1 }}>
         <MapContainer 
             center={center} 
             zoom={4} 
@@ -398,6 +399,7 @@
             </Popup>
             )}
         </MapContainer>
+        <StatesList stateData={stateData} allReservations={allReservations} cityData={cityData} countyData={countyData} />
         </div>
     );
     };

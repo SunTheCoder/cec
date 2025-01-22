@@ -5,8 +5,7 @@ import Layout from './Layout';
 import LeafletMap from '../components/LeafletMap/map';
 import "leaflet/dist/leaflet.css";
 import Home from '../pages/Home/Home.jsx';
-
-
+import State from '../pages/State.jsx';
 
 export const router = createBrowserRouter([
   {
@@ -28,6 +27,10 @@ export const router = createBrowserRouter([
         path: "map",
         element: <LeafletMap/>,
       },
+      {
+        path: "states/:stateName",
+        element: <State/>,
+      }
     ],
   },
 ]);
