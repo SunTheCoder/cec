@@ -248,6 +248,46 @@
         >
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap contributors" />
 
+            {/* Map Key */}
+            <div className="leaflet-bottom leaflet-right" style={{ margin: "20px", backgroundColor: "white", padding: "10px", borderRadius: "5px" }}>
+                <div>
+                    <p><strong>Key:</strong></p>
+                    <br></br>
+                    <div style={{ display: "flex", alignItems: "center", marginBottom: "5px" }}>
+                        <div style={{ 
+                            width: "20px", 
+                            height: "20px", 
+                            backgroundColor: "#ff0000", 
+                            marginRight: "5px", 
+                            opacity: 0.4 
+                        }}></div>
+                        <span>Disadvantaged Communities</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", marginBottom: "5px" }}>
+                        <div style={{ 
+                            width: "20px", 
+                            height: "20px", 
+                            backgroundColor: "#22c55e",
+                            borderRadius: "50%",
+                            border: "1px solid #000",
+                            marginRight: "5px"
+                        }}></div>
+                        <span>Cities with Reservations Nearby</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", marginBottom: "5px" }}>
+                        <div style={{ 
+                            width: "20px", 
+                            height: "20px", 
+                            backgroundColor: "#ff7800",
+                            borderRadius: "50%",
+                            border: "1px solid #000",
+                            marginRight: "5px"
+                        }}></div>
+                        <span>Cities without Reservations</span>
+                    </div>
+                </div>
+            </div>
+
             <LayersControl position="topright">
             {/* State Boundaries Layer */}
             <LayersControl.Overlay checked name="State Boundaries">
