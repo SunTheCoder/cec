@@ -2,6 +2,9 @@ import { NavLink } from "react-router-dom";
 import ProfileButton from "./ProfileButton";
 
 export default function Navigation() {
+  // Common tooltip styles
+  const tooltipClasses = "absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-gray-800 text-white text-xs py-1 px-2 rounded shadow-lg whitespace-nowrap z-10";
+
   return (
     <nav className="p-4 shadow-lg">
       <ul className="flex gap-12 items-center text-gray-800">
@@ -18,8 +21,8 @@ export default function Navigation() {
               height="50"
             />
           </NavLink>
-          <span className="absolute top-1/2 -translate-y-1/2 left-full mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 delay-300 bg-gray-800 text-white text-xs py-1 px-2 rounded shadow-lg">
-            Home
+          <span className={`${tooltipClasses} left-full ml-2`}>
+            Return to Home Page
           </span>
         </li>
 
@@ -31,10 +34,11 @@ export default function Navigation() {
           >
             Map
           </NavLink>
-          <span className="absolute top-1/2 -translate-y-1/2 left-full ml-2 mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 delay-500 bg-gray-800 text-white text-xs py-1 px-2 rounded shadow-lg">
-            View Map
+          <span className={`${tooltipClasses} left-full ml-2`}>
+            View Interactive Map
           </span>
         </li>
+
         <li className="relative group">
           <NavLink
             to="/login"
@@ -42,16 +46,16 @@ export default function Navigation() {
           >
             Login
           </NavLink>
-          <span className="absolute top-1/2 -translate-y-1/2 left-full ml-2 mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 delay-500 bg-gray-800 text-white text-xs py-1 px-2 rounded shadow-lg">
-            Login
+          <span className={`${tooltipClasses} left-full ml-2`}>
+            Sign In to Your Account
           </span>
         </li>
 
         {/* Profile Button with Tooltip */}
         <li className="relative group ml-auto">
           <ProfileButton />
-          <span className="absolute top-1/2 -translate-y-1/2 right-full mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 delay-500 bg-gray-800 text-white text-xs py-1 px-2 rounded shadow-lg">
-            Profile
+          <span className={`${tooltipClasses} right-full mr-2`}>
+            Manage Your Profile
           </span>
         </li>
       </ul>
