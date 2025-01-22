@@ -38,7 +38,19 @@
             // Fetch cities data
             const citiesResponse = await fetch("/us_cities.geojson");
             const citiesGeoJSON = await citiesResponse.json();
-            setCityData(citiesGeoJSON);
+            // Filter cities to only include those with reservations nearby
+            const citiesWithReservations = {
+                ...citiesGeoJSON,
+                features: citiesGeoJSON.features.filter(feature => {
+                    const cityPoint = L.latLng(feature.geometry.coordinates[1], feature.geometry.coordinates[0]);
+                    return data.features.some(reservation => {
+                        const [lon, lat] = reservation.geometry.coordinates[0][0];
+                        const reservationPoint = L.latLng(lat, lon);
+                        return cityPoint.distanceTo(reservationPoint) <= 100000;
+                    });
+                })
+            };
+            setCityData(citiesWithReservations);
 
             // Separate features by region
             const mainland = data.features.filter((feature) => {
@@ -82,8 +94,7 @@
         // Add the EPA IRA layer
         const epaLayer = esri.featureLayer({
             url: 'https://services.arcgis.com/cJ9YHowT8TU7DUyn/arcgis/rest/services/epa_ira/FeatureServer/0',
-            where: "Disadvantaged = 'Yes'", 
-            where: "American_Indian_Reservations = 'Yes' OR Alaska_Native_Villages = 'Yes' OR Alaska_Native_Allotments = 'Yes'",
+            where: "Disadvantaged = 'Yes' AND (American_Indian_Reservations = 'Yes' OR Alaska_Native_Villages = 'Yes' OR Alaska_Native_Allotments = 'Yes')",
             style: function (feature) {
                 return {
                     color: '#ff0000', // Changed to red for visibility
@@ -225,13 +236,6 @@
                 const [lon, lat] = reservation.geometry.coordinates[0][0];
                 return bounds.contains(L.latLng(lat, lon));
             });
-        } else if (type === 'city') {
-            const cityPoint = L.latLng(feature.geometry.coordinates[1], feature.geometry.coordinates[0]);
-            return allReservations.features.some(reservation => {
-                const [lon, lat] = reservation.geometry.coordinates[0][0];
-                const reservationPoint = L.latLng(lat, lon);
-                return cityPoint.distanceTo(reservationPoint) <= 100000; // 100km in meters
-            });
         }
         return false;
     };
@@ -274,17 +278,6 @@
                         }}></div>
                         <span>Cities with Reservations Nearby</span>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", marginBottom: "5px" }}>
-                        <div style={{ 
-                            width: "20px", 
-                            height: "20px", 
-                            backgroundColor: "#ff7800",
-                            borderRadius: "50%",
-                            border: "1px solid #000",
-                            marginRight: "5px"
-                        }}></div>
-                        <span>Cities without Reservations</span>
-                    </div>
                 </div>
             </div>
 
@@ -318,12 +311,12 @@
             </LayersControl.Overlay>
 
             {/* Cities Layer */}
-            <LayersControl.Overlay name="Cities">
+            <LayersControl.Overlay name="Cities with Reservations">
                 {cityData && <GeoJSON 
                     data={cityData}
                     pointToLayer={(feature, latlng) => L.circleMarker(latlng, {
                         radius: 8,
-                        fillColor: hasReservationsNearby(feature, 'city') ? "#22c55e" : "#ff7800", // Changed color to green for cities with reservations
+                        fillColor: "#22c55e",
                         color: "#000",
                         weight: 1,
                         opacity: 1,
