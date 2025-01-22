@@ -1,6 +1,8 @@
     import React, { useEffect, useState, useRef } from "react";
     import { MapContainer, TileLayer, GeoJSON, LayersControl, Popup } from "react-leaflet";
     import "leaflet/dist/leaflet.css";
+    import * as L from 'leaflet';
+    import * as esri from 'esri-leaflet';
 
     const ResourceMap = () => {
     const [geojsonData, setGeojsonData] = useState({ mainland: null, alaska: null, islands: null });
@@ -11,6 +13,9 @@
     const [isExpanded, setIsExpanded] = useState(false);
     const [reservationsByState, setReservationsByState] = useState({});
     const [allReservations, setAllReservations] = useState(null);
+
+    // Add a ref to store the map instance
+    const mapRef = useRef(null);
 
     useEffect(() => {
         const fetchGeoJSONs = async () => {
@@ -67,6 +72,60 @@
 
         fetchGeoJSONs();
     }, []);
+
+    // Modify the useEffect for ArcGIS layer
+    useEffect(() => {
+        if (!mapRef.current) return;
+
+        console.log("Adding EPA layer..."); // Debug log
+
+        // Add the EPA IRA layer
+        const epaLayer = esri.featureLayer({
+            url: 'https://services.arcgis.com/cJ9YHowT8TU7DUyn/arcgis/rest/services/epa_ira/FeatureServer/0',
+            where: "Disadvantaged = 'Yes'", 
+            where: "American_Indian_Reservations = 'Yes' OR Alaska_Native_Villages = 'Yes' OR Alaska_Native_Allotments = 'Yes'",
+            style: function (feature) {
+                return {
+                    color: '#ff0000', // Changed to red for visibility
+                    weight: 2,
+                    opacity: 0.8,
+                    fillOpacity: 0.4
+                };
+            },
+            onEachFeature: function (feature, layer) {
+                layer.bindPopup(() => {
+                    const properties = feature.properties;
+                    const propertyList = Object.entries(properties)
+                        .map(([key, value]) => `<p><strong>${key}:</strong> ${value || 'N/A'}</p>`)
+                        .join('');
+                    
+                    return `<div>
+                        <h3>EPA IRA Community</h3>
+                        ${propertyList}
+                    </div>`;
+                });
+            }
+        }).addTo(mapRef.current);
+
+        // Debug event handlers
+        epaLayer.on('loading', function() {
+            console.log('EPA layer loading...');
+        });
+        
+        epaLayer.on('load', function() {
+            console.log('EPA layer loaded!');
+        });
+
+        epaLayer.on('error', function(e) {
+            console.error('Error loading EPA layer:', e);
+        });
+
+        return () => {
+            if (mapRef.current && epaLayer) {
+                mapRef.current.removeLayer(epaLayer);
+            }
+        };
+    }, [mapRef.current]); // Only run when map instance changes
 
     // Function to handle feature click and show metadata
     const onEachFeature = (feature, layer) => {
@@ -181,7 +240,12 @@
 
     return (
         <div style={{ height: "100vh", width: "100%" }}>
-        <MapContainer center={center} zoom={4} style={{ height: "100%", width: "100%" }}>
+        <MapContainer 
+            center={center} 
+            zoom={4} 
+            style={{ height: "100%", width: "100%" }}
+            ref={mapRef} // Add ref to MapContainer
+        >
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap contributors" />
 
             <LayersControl position="topright">
@@ -239,6 +303,11 @@
 
             <LayersControl.Overlay checked name="Hawaii & Islands">
                 {geojsonData.islands && <GeoJSON data={geojsonData.islands} onEachFeature={onEachFeature} />}
+            </LayersControl.Overlay>
+
+            {/* Modified EPA layer control */}
+            <LayersControl.Overlay checked name="EPA IRA Communities">
+                {/* Layer added programmatically */}
             </LayersControl.Overlay>
             </LayersControl>
 
