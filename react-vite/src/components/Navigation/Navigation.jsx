@@ -4,6 +4,7 @@ import ProfileButton from "./ProfileButton";
 export default function Navigation() {
   // Common tooltip styles
   const tooltipClasses = "absolute pointer-events-none left-[calc(100%+8px)] top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-gray-800 text-white text-xs py-1 px-2 rounded shadow-lg whitespace-nowrap z-10";
+  const tooltipClassesRight = "absolute pointer-events-none right-[calc(100%+8px)] top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-gray-800 text-white text-xs py-1 px-2 rounded shadow-lg whitespace-nowrap z-10";
 
   return (
     <nav className="p-4 shadow-lg">
@@ -54,7 +55,7 @@ export default function Navigation() {
         {/* Profile Button with Tooltip */}
         <li className="relative group inline-block ml-auto">
           <ProfileButton />
-          <span className={tooltipClasses}>
+          <span className={tooltipClassesRight}>
             Manage Your Profile
           </span>
         </li>

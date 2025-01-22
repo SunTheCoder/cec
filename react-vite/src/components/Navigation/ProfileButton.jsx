@@ -40,37 +40,43 @@ function ProfileButton() {
   };
 
   return (
-    <>
-      <button onClick={toggleMenu}>
+    <div className="relative">
+      <button onClick={toggleMenu} className="text-2xl">
         <FaUserCircle />
       </button>
       {showMenu && (
-        <ul className={"profile-dropdown"} ref={ulRef}>
+        <ul className="absolute right-0 top-full mt-2 w-48 bg-white rounded-md shadow-lg py-2 z-[1001]" ref={ulRef}>
           {user ? (
             <>
-              <li>{user.username}</li>
-              <li>{user.email}</li>
-              <li>
-                <button onClick={logout}>Log Out</button>
+              <li className="px-4 py-2 hover:bg-gray-100">{user.username}</li>
+              <li className="px-4 py-2 hover:bg-gray-100">{user.email}</li>
+              <li className="border-t">
+                <button onClick={logout} className="w-full text-left px-4 py-2 hover:bg-gray-100">
+                  Log Out
+                </button>
               </li>
             </>
           ) : (
             <>
-              <OpenModalMenuItem
-                itemText="Log In"
-                onItemClick={closeMenu}
-                modalComponent={<LoginFormModal />}
-              />
-              <OpenModalMenuItem
-                itemText="Sign Up"
-                onItemClick={closeMenu}
-                modalComponent={<SignupFormModal />}
-              />
+              <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
+                <OpenModalMenuItem
+                  itemText="Log In"
+                  onItemClick={closeMenu}
+                  modalComponent={<LoginFormModal />}
+                />
+              </li>
+              <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
+                <OpenModalMenuItem
+                  itemText="Sign Up"
+                  onItemClick={closeMenu}
+                  modalComponent={<SignupFormModal />}
+                />
+              </li>
             </>
           )}
         </ul>
       )}
-    </>
+    </div>
   );
 }
 
